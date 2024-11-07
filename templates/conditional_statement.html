@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conditional Statement Example</title>
+</head>
+<body>
+    <h1>Basic comparison</h1>
+    {% if company == "Apple" %}
+        <ul>
+            <li>iPhone</li>
+            <li>iPad</li>
+            <li>MacBook</li>
+        </ul>
+    {% elif company == "Microsoft" %}
+        <ul>
+            <li>Surface</li>
+            <li>Windows</li>
+            <li>Office</li>
+        </ul>
+    {% else %}
+        <p>No products available.</p>
+    {% endif %}
+
+</body>
+</html>
