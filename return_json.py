@@ -1,10 +1,11 @@
-from flask import Flask, jsonify, request
+import os
+import torch
+from flask import Flask, jsonify, request, render_template
 from transformers import pipeline
 from huggingface_hub import login
-import os
 from dotenv import load_dotenv
-import torch
 
+# Load environment variables from .env file
 load_dotenv()
 auth_token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 login(auth_token)
@@ -30,41 +31,47 @@ if not os.path.exists(upload_folder):
 
 app.config['UPLOAD_FOLDER'] = upload_folder
 
+@app.route('/')
+def index():
+    return render_template('introduction.html')
+
 @app.route('/predict/', methods=['GET','POST'])
 def predict():
-  if request.method == 'POST':
-    # cek file yang diupload harus jpg, jpeg, atau png
-    if 'file' not in request.files:
-      return jsonify({
-        "message": "No file found"
-        }),400
-    
-    file = request.files['file']
-    # Cek file yang diupload harus jpg, jpeg, atau png
-    file_allowed = ['jpg', 'jpeg', 'png']
-    if file.filename == '':
-      return jsonify({
-        "message": "No file selected for uploading"
-        }), 400
-    if not (file.filename.split('.')[-1].lower() in file_allowed):
-        return jsonify({
-            "message": "Invalid file format. Only .jpg, .jpeg, .png are allowed"
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return jsonify({
+                "message": "No file found"
             }), 400
-    
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-    file.save(file_path)
-    
-    try:
-        score, label = prediction(file_path)
-        return jsonify({
-           "score": score, "label": label
-           })
         
-    except Exception as e:
-        return jsonify({
-           "message": str(e)
-           }), 500
+        file = request.files['file']
+        file_allowed = ['jpg', 'jpeg', 'png']
+        
+        if file.filename == '':
+            return jsonify({
+                "message": "No file selected for uploading"
+            }), 400
+        
+        if not (file.filename.split('.')[-1].lower() in file_allowed):
+            return jsonify({
+                "message": "Invalid file format. Only .jpg, .jpeg, .png are allowed"
+            }), 400
+        
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        file.save(file_path)
+        
+        try:
+            score, label = prediction(file_path)
+            return jsonify({
+                "score": score,
+                "label": label
+            })
+            
+        except Exception as e:
+            return jsonify({
+                "message": str(e)
+            }), 500
     
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

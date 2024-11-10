@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prediksi Gambar</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            display: none;
+        }
+        img {
+            max-width: 400px;
+            margin-top: 10px;
+        }
+        #loading {
+            display: none;
+            margin: 20px 0;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Prediksi Gambar Blur atau Bokeh</h1>
+    <form id="uploadForm">
+        <input type="file" name="file" accept=".jpg,.jpeg,.png" id="fileInput">
+        <button type="submit">Upload & Prediksi</button>
+    </form>
+    
+    <div id="loading">Sedang memproses...</div>
+    <div id="error" class="error"></div>
+    
+    <div id="result" class="result">
+        <h3>Hasil Prediksi:</h3>
+        <img id="previewImage" src="" alt="Uploaded Image">
+        <p>Label: <span id="predictionLabel"></span></p>
+        <p>Score: <span id="predictionScore"></span>%</p>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('Pilih file terlebih dahulu');
+                return;
+            }
+
+            // Tampilkan preview gambar
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImage').src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+
+            // Siapkan form data
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Tampilkan loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('result').style.display = 'none';
+
+            try {
+                const response = await fetch('/predict/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Tampilkan hasil
+                    document.getElementById('predictionLabel').textContent = data.label;
+                    document.getElementById('predictionScore').textContent = (data.score * 100).toFixed(2);
+                    document.getElementById('result').style.display = 'block';
+                } else {
+                    showError(data.message || 'Terjadi kesalahan');
+                }
+            } catch (error) {
+                showError('Terjadi kesalahan dalam pemrosesan');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
